@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+<div class="jumbotron text-center bg-light p-5 rounded">
+    <h1 class="display-4">Welcome to CAT-Net Analyzer</h1>
+    <p class="lead">Advanced image forensic tool for detection of manipulation and splicing using DCT and RGB features.</p>
+    <hr class="my-4">
+    <p>Get started by analyzing an image.</p>
+    <a class="btn btn-primary btn-lg" href="{{ url_for('main.dashboard') }}" role="button">Start Analysis</a>
+
+    {% if not is_logged_in %}
+    <p class="mt-3">
+        New user? <a href="{{ url_for('auth.signup') }}">Sign Up Here</a>
+    </p>
+    {% endif %}
+</div>
+{% endblock %}

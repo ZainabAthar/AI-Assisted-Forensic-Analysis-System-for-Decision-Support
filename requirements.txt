@@ -1,0 +1,22 @@
+# --- Web Framework Dependencies ---
+Flask
+Flask-SQLAlchemy         # For database/user management
+Flask-WTF                # For form handling
+Werkzeug                 # Handles file uploads
+
+# --- CAT-Net Core Dependencies (From your list) ---
+Cython
+pyyaml
+yacs>=0.1.5
+tqdm
+torch_dct
+opencv-python
+tensorboardX             # Useful for logging/tensorboard functions (even if not strictly needed for inference)
+matplotlib
+seaborn
+
+# --- Core ML Dependencies (Implied) ---
+torch
+torchvision
+numpy
+# git+https://github.com/dwgoon/jpegio.git

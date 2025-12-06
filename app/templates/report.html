@@ -1,0 +1,63 @@
+{% extends "layout.html" %}
+{% block title %}Analysis Report{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">CAT-Net Splicing Detection Report</h1>
+        <p class="lead">Analyzed file: <strong>{{ filename }}</strong></p>
+    </div>
+
+    <!-- Original Image (Now taking full width) -->
+    <div class="col-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header">Original Image</div>
+            <img src="{{ image_url }}" class="card-img-top" alt="Uploaded Image" style="max-height: 450px; object-fit: contain;">
+        </div>
+    </div>
+
+    <!-- REMOVED: Heatmap Output (col-md-6) -->
+
+    <!-- Report Summary (Full width placement) -->
+    <div class="col-12 mt-2">
+        <div class="card shadow">
+            <!-- category (success/danger) is passed in report_data -->
+            <div class="card-header bg-{{ report_data.category }} text-white">
+                <h5 class="mb-0">Analysis Summary</h5>
+            </div>
+            <div class="card-body">
+                <p class="h3 mb-3">Overall Result: 
+                    <span class="badge bg-{{ report_data.category }}">{{ report_data.prediction }}</span>
+                </p>
+
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Maximum Manipulation Score (Peak Probability): 
+                        <span class="badge bg-primary">{{ report_data.max_manipulation_score }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Average Manipulation Score: 
+                        <span class="badge bg-secondary">{{ report_data.average_score }}</span>
+                    </li>
+                </ul>
+                
+                <hr>
+
+                {# --- DOWNLOAD BUTTON (This remains functional) --- #}
+                {# Extracting just the filename from the URL path (e.g., guest_image_heatmap.png) #}
+                {% set clean_filename = report_data.heatmap_url_path.split('/')[-1] %}
+                
+                <a href="{{ url_for('main.download_file', filename=clean_filename) }}" 
+                   class="btn btn-primary btn-lg w-100" 
+                   download="{{ clean_filename }}">
+                    <i class="fas fa-download"></i> Download Analysis Heatmap (.png)
+                </a>
+
+                <div class="alert alert-warning mt-3">
+                    <strong>Note:</strong> {{ report_data.recommendation }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
