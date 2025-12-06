@@ -1,55 +1,101 @@
-This guide details the steps to set up and run the Flask application integrating the CAT-Net model.
+Here is a clean, professional, **fully copy-paste-ready README** with no emojis:
 
-# 1. Requirements
+---
 
-Python 3.9+
+# AI Forensics – CAT-Net Integrated Flask Application
 
-Conda: Recommended for installing jpegio.
+This repository contains a Flask-based web application that integrates the CAT-Net model for tampered image detection. Follow the steps below to correctly configure the environment, place required files, and run the application.
 
-Model Weights: CAT_full_v2.pth.tar.
+---
 
-# 2. File Placement
+## 1. Requirements
 
-Ensure your model weights and core dependencies are correctly located:
+* Python 3.9+
+* Conda (recommended, particularly for installing `jpegio`)
+* Model Weights:
 
-File/Folder	Destination
-CAT_full_v2.pth.tar	app/catnet_core/
-jpegio/ source	app/catnet_core/jpegio/
-lib/, Splicing/	app/catnet_core/
+  * `CAT_full_v2.pth.tar`
 
-# 3. Installation & Environment
+---
 
-Use Conda to ensure stability, especially for the critical jpegio dependency.
+## 2. File Placement
 
-code
-Powershell
-download
-content_copy
-expand_less
+Ensure all required files and folders are placed in the correct locations:
 
-# 1. Create and activate environment
+| File/Folder               | Destination               |
+| ------------------------- | ------------------------- |
+| `CAT_full_v2.pth.tar`     | `app/catnet_core/`        |
+| `jpegio/` (source folder) | `app/catnet_core/jpegio/` |
+| `lib/`, `Splicing/`       | `app/catnet_core/`        |
+
+The directory structure should look like this:
+
+```
+app/
+ └── catnet_core/
+      ├── CAT_full_v2.pth.tar
+      ├── jpegio/
+      ├── lib/
+      └── Splicing/
+```
+
+---
+
+## 3. Installation and Environment Setup
+
+Use Conda for a stable and compatible environment, especially for the `jpegio` dependency.
+
+### 1. Create and Activate Conda Environment
+
+```powershell
 conda create -n catnet_env python=3.11
 conda activate catnet_env
+```
 
-# 2. Install all core dependencies
+### 2. Install Required Python Packages
+
+```powershell
 pip install -r requirements.txt
+```
 
-# 3. Install the complex dependency
-conda install -c conda-forge jpegio
+### 3. Install jpegio (Important)
 
-# 4. Running the Application
-Set required environment variables and launch the Flask server.
+`jpegio` does not reliably install via pip on Windows.
 
-code
-Powershell
-download
-content_copy
-expand_less
-# A. Set Variables (Required in session)
+```powershell
+pip install -e .\jpegio
+python setup.py install
+```
+
+---
+
+## 4. Running the Application
+
+### A. Set Environment Variables
+
+These must be set for the Flask application to run:
+
+```powershell
 $env:FLASK_ENV="development"
-$env:SECRET_KEY="your_super_secret_key_12345"
+$env:SECRET_KEY="**"
+```
 
-# B. Launch Server
+### B. Start the Flask Server
+
+```powershell
 python run.py
+```
 
- 
+Once the server is running, open your browser and go to:
+
+```
+http://127.0.0.1:5000
+```
+
+---
+
+## 5. Notes
+
+* Ensure that model weights and folder structure are correctly placed before running.
+* If `jpegio` causes installation issues, verify that Conda is properly configured on your system.
+
