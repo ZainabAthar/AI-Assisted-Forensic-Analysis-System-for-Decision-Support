@@ -99,10 +99,11 @@ except Exception as e:
     print(f"FATAL: Model initialization error: {e}")
 
 
-def analyze_image_with_catnet(image_path: str, user_id: str = "guest") -> dict:
+def analyze_image_with_catnet(image_path: str, user_id: str | None) -> dict:
     """
     Performs CAT-Net inference on a single image file by stream-lining data fetching.
     """
+    user_id=user_id or 'guest'
     global MODEL
     if MODEL is None:
         load_catnet_model()

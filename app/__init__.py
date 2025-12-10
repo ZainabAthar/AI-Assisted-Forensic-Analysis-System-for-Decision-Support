@@ -13,6 +13,9 @@ def create_app(config_object=None):
     
     # Define where uploads go (in static/uploads)
     app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'uploads')
+
+    #Defines SQLite database path.
+    app.config['DB_PATH']=os.path.join(app.root_path,'database.db')
     
     # Ensure the upload folder exists
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -33,5 +36,8 @@ def create_app(config_object=None):
     # statement within app/routes.py, which calls load_catnet_model() 
     # from app/catnet_core/analysis_service.py. This ensures the model 
     # loads before the first web request is processed.
-    
+
+    from .db import close_db
+    app.teardown_appcontext(close_db)
+
     return app

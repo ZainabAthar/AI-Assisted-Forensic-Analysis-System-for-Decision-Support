@@ -20,3 +20,4 @@ torch
 torchvision
 numpy
 # git+https://github.com/dwgoon/jpegio.git
+dotenv

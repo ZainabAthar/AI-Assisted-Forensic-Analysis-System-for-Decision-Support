@@ -1,56 +1,52 @@
 # CAT-Net-Webapp/app/auth.py
-
-from flask import Blueprint, render_template, redirect, url_for, flash, request
-
+from flask import Blueprint, render_template, redirect, url_for, flash, request,session
+from . import db
 # Create a Blueprint instance for authentication routes
 auth = Blueprint('auth', __name__, url_prefix='/auth')
-
-# --- Placeholder User/Auth Logic ---
-# Global state to mock a logged-in user (DO NOT USE IN PRODUCTION)
-DUMMY_USER = {'is_logged_in': False, 'username': 'Guest'}
-
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
-    # Retrieve current login status for template rendering
-    is_logged_in = DUMMY_USER.get('is_logged_in', False)
-    
-    if is_logged_in:
-        # If already logged in, go to dashboard
-        return redirect(url_for('main.dashboard'))
-        
-    if request.method == 'POST':
-        # Placeholder logic for POST submission
-        DUMMY_USER['is_logged_in'] = True
-        
-        # Safely get username from form data
-        username = request.form.get('username', 'TestUser') 
-        DUMMY_USER['username'] = username
-        
-        flash(f'Successfully logged in as {username}!', 'success')
-        return redirect(url_for('main.dashboard')) 
-        
-    # FIX: Pass the necessary template context (user and status)
-    return render_template('auth/login.html', 
-                           user=DUMMY_USER, 
-                           is_logged_in=is_logged_in)
-
+    if request.method=='GET':
+        return render_template('auth/login.html')
+    #Extract user credentials.
+    usrname=request.form.get('username')
+    pwd=request.form.get('password')
+    if not usrname or not pwd:
+        return'Missing username or password.'
+    #Authenticate user. 
+    if not db.usr_auth(usrname,pwd):
+        flash('Invalid username or password.','danger')#TODO: more verbose errors. 
+        return render_template('auth/login.html')
+    #Create new session and return ID.
+    ssn_id=db.ssn_new(usrname) 
+    if not ssn_id:#expected to be unreachable.
+        print('Failed to create session.')
+        flash('Failed to create session.')
+        return render_template('auth/login.html')
+    session['session_id']=ssn_id
+    return redirect(url_for('main.dashboard'))
 @auth.route('/signup', methods=['GET', 'POST'])
 def signup():
-    is_logged_in = DUMMY_USER.get('is_logged_in', False)
-    
-    if request.method == 'POST':
-        # Placeholder: assume successful registration and redirect to login
-        flash('Signup successful! Please log in.', 'success')
-        return redirect(url_for('auth.login'))
-        
-    # FIX: Pass the necessary template context
-    return render_template('auth/signup.html', 
-                           user=DUMMY_USER, 
-                           is_logged_in=is_logged_in)
-
+    if request.method=='GET':
+        return render_template('auth/signup.html')
+    #Extract user credentials.
+    usrname=request.form.get('username')
+    pwd=request.form.get('password')
+    if not usrname or not pwd:
+        return'Missing username or password.'
+    #Register new user.
+    if not db.usr_reg(usrname,pwd):
+        return redirect(url_for('auth.signup'))
+    #Create new session.
+    ssn_id=db.ssn_new(usrname)
+    session['session_id']=ssn_id
+    return redirect(url_for('main.dashboard'))
 @auth.route('/logout')
 def logout():
-    DUMMY_USER['is_logged_in'] = False
-    DUMMY_USER['username'] = 'Guest'
-    flash('Logged out successfully.', 'info')
+    #TODO.
+    ssn_id=session['session_id']
+    if not ssn_id:
+        flash('Invalid session.')
+        return url_for('main.index')
+    db.ssn_rm(ssn_id)
+    flash('Logged out successfully.','info')
     return redirect(url_for('main.index'))

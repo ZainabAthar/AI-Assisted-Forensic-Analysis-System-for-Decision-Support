@@ -1,0 +1,5 @@
+./app/database.db
+./static/uploads/*
+*.pth.tar
+**/__pycache__/
+./app/catnet_core/jpegio/*
