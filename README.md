@@ -1,4 +1,3 @@
-Here is a clean, professional, **fully copy-paste-ready README** with no emojis:
 
 ---
 
