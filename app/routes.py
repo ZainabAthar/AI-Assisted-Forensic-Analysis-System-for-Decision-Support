@@ -15,11 +15,11 @@ def allowed_file(filename):
 @main.route('/')
 def index():
     """Home page/Landing page."""
-    return render_template('index.html',is_logged_in=not db.ssn_usr_id(session['session_id']))
+    return render_template('index.html',is_logged_in=session.get('session_id')is not None)
 @main.route('/dashboard')
 def dashboard():
     """Main page for uploading images."""
-    return render_template('dashboard.html',is_logged_in=not db.ssn_usr_id(session['session_id']))
+    return render_template('dashboard.html',is_logged_in=session.get('session_id')is not None)
 @main.route('/download/<path:filename>', methods=['GET'])
 def download_file(filename):
     """Securely serves files from the predictions directory for download."""
@@ -65,7 +65,7 @@ def analyze():
             #db.media_new(ssn_id,filename)
             flash('Analysis complete. Data stored in your profile.', 'success')
         else:#or else guest user.
-            flash('Analysis complete. Since you are not logged in, this report will not be saved.', 'warning')
+            flash('Analysis complete. Since you are not logged in, this report will not be saved.', 'warning')#TODO add a "login to save" option here.
         # Pass image URL and the report data (including the heatmap path)
         # CRITICAL FIX: Pass 'user' and 'is_logged_in' for the base templates (layout/navbar)
         return render_template('report.html', 
@@ -73,7 +73,7 @@ def analyze():
                                image_url=url_for('static', filename=f'uploads/{filename}'),
                                heatmap_url=url_for('static', filename=analysis_results['heatmap_url_path']),
                                report_data=analysis_results,
-                               username=usrname if usrname else'guest') # <-- ADDED
+                               username=usrname if usrname else'guest')
     except Exception as e:
         # We catch ALL exceptions here, including model loading failures.
         flash(f'Analysis failed due to a model error: {e}', 'danger')

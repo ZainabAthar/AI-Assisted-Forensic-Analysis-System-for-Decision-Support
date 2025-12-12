@@ -42,11 +42,11 @@ def signup():
     return redirect(url_for('main.dashboard'))
 @auth.route('/logout')
 def logout():
-    #TODO.
-    ssn_id=session['session_id']
+    ssn_id=session.get('session_id')
     if not ssn_id:
         flash('Invalid session.')
         return url_for('main.index')
     db.ssn_rm(ssn_id)
+    session['session_id']=None
     flash('Logged out successfully.','info')
     return redirect(url_for('main.index'))
