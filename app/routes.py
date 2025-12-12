@@ -15,11 +15,18 @@ def allowed_file(filename):
 @main.route('/')
 def index():
     """Home page/Landing page."""
-    return render_template('index.html',is_logged_in=session.get('session_id')is not None)
+    ssn_id=session.get('session_id')
+    if not ssn_id:#Create session if none exists.
+        ssn_id=db.ssn_new()
+        session['session_id']=ssn_id
+    return render_template('index.html',is_logged_in=db.ssn_usr_id(ssn_id)is not None)
 @main.route('/dashboard')
 def dashboard():
     """Main page for uploading images."""
-    return render_template('dashboard.html',is_logged_in=session.get('session_id')is not None)
+    ssn_id=session.get('session_id')
+    if not ssn_id:#Invalid session check.
+        return 'Invalid session.',404#TODO improve error reporting.
+    return render_template('dashboard.html',is_logged_in=db.ssn_usr_id(ssn_id)is not None)
 @main.route('/download/<path:filename>', methods=['GET'])
 def download_file(filename):
     """Securely serves files from the predictions directory for download."""
@@ -52,17 +59,17 @@ def analyze():
     upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
     file.save(upload_path)
     # Determine user ID for saving the prediction map
-    ssn_id=request.form.get('session_id')
+    ssn_id=session.get('session_id')
     usr_id=db.ssn_usr_id(ssn_id)
     usrname=db.usr_name(usr_id)#usrname=None if guest user.
     # 4. Run Model Inference
     try:
         # Pass the physical path of the uploaded image
-        analysis_results = analyze_image_with_catnet(upload_path,user_id=usrname)
+        analysis_results=analyze_image_with_catnet(upload_path,user_id=usrname)#TODO make sure this handles guests properly.
         # 5. Handle Storage/Report generation
         if usrname:#if logged in.
             # TODO: Store results (filename, heatmap_url_path, prediction) in DB
-            #db.media_new(ssn_id,filename)
+            
             flash('Analysis complete. Data stored in your profile.', 'success')
         else:#or else guest user.
             flash('Analysis complete. Since you are not logged in, this report will not be saved.', 'warning')#TODO add a "login to save" option here.

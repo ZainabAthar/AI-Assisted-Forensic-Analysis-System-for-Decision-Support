@@ -12,7 +12,7 @@ def close_db(exception):#Terminates database connection per-request.
         db.close()
         g._database=None
 def query(query,params=None,one=False):
-    if not query:
+    if query is None:
         return None
     params=params or[]
     cur=get_db().execute(query,params)
@@ -32,7 +32,7 @@ def usr_auth(usrname,pwd):
     ret=query('SELECT COUNT(*) FROM Users WHERE username=? AND password=?;',(usrname,pwd,),one=True)
     return(ret[0]==1)if ret else False
 def usr_reg(usrname,pwd):
-    if not usrname or not pwd:#TODO replace this with more general validation.
+    if usrname is None or pwd is None:#TODO replace this with more general validation.
         flash('Invalid username or password.','danger')
         return False
     db=get_db()
@@ -51,22 +51,35 @@ def usr_reg(usrname,pwd):
         print(f'Database Error: \"{err}\"')#TODO maintain error codes and IDs.
         flash('Internal error. Try again later.','danger')
         return False
-def ssn_new(usrname):
-    if not usrname:
-        return None
+def ssn_new():
     db=get_db()
     try:
-        uid=usr_id(usrname)
-        db.execute('INSERT INTO Sessions(user_id) VALUES(?);',(uid,))
-        ret=query('SELECT session_id FROM Sessions WHERE user_id=?',(uid,),one=True)
+        cur=db.cursor()
+        cur.execute('INSERT INTO Sessions(user_id) VALUES(NULL);')
+        ssn_id=cur.lastrowid
+        cur.close()
         db.commit()
-        return ret[0]if ret else None
+        return ssn_id
+    except sqlite3.Error as err:
+        db.rollback()
+        print(f'Database Error: \"{err}\"')
+        return None
+def ssn_usr_bind(sid,uid):
+    if uid is None or sid is None:
+        return False
+    db=get_db()
+    try:
+        cur=db.cursor()
+        cur.execute('UPDATE Sessions SET user_id=? WHERE session_id=?',(uid,sid))
+        cur.close()
+        db.commit()
+        return True
     except sqlite3.Error as err:
         db.rollback()
         print(f'Database Error: \"{err}\"')
         return None
 def ssn_rm(ssn_id):
-    if not ssn_id:
+    if ssn_id is None:
         return False
     db=get_db()
     try:
@@ -77,7 +90,7 @@ def ssn_rm(ssn_id):
         db.rollback()
         print(f'Database Error: \"{err}\"')
 def ssn_usr_id(ssn_id):
-    if not ssn_id:
+    if ssn_id is None:
         return None
     ret=query('SELECT user_id FROM Sessions WHERE session_id=?;',(ssn_id,),one=True)
     return ret[0]if ret else None

@@ -5,6 +5,9 @@ from . import db
 auth = Blueprint('auth', __name__, url_prefix='/auth')
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
+    ssn_id=session.get('session_id')
+    if not ssn_id:
+        return'Invalid session.',404#TODO improve error reporting.
     if request.method=='GET':
         return render_template('auth/login.html')
     #Extract user credentials.
@@ -16,13 +19,11 @@ def login():
     if not db.usr_auth(usrname,pwd):
         flash('Invalid username or password.','danger')#TODO: more verbose errors. 
         return render_template('auth/login.html')
-    #Create new session and return ID.
-    ssn_id=db.ssn_new(usrname) 
-    if not ssn_id:#expected to be unreachable.
-        print('Failed to create session.')
-        flash('Failed to create session.')
-        return render_template('auth/login.html')
-    session['session_id']=ssn_id
+    #Update session.
+    usr_id=db.usr_id(usrname)
+    ret=db.ssn_usr_bind(ssn_id,usr_id)
+    if not ret:
+        return'Internal error. Try again later.'#TODO improve error reporting.
     return redirect(url_for('main.dashboard'))
 @auth.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -43,10 +44,11 @@ def signup():
 @auth.route('/logout')
 def logout():
     ssn_id=session.get('session_id')
-    if not ssn_id:
-        flash('Invalid session.')
-        return url_for('main.index')
+    if not ssn_id:#Invalid session check.
+        return'Invalid session.',404#TODO improve error reporting.
+    #Close session & start a new one.
     db.ssn_rm(ssn_id)
     session['session_id']=None
     flash('Logged out successfully.','info')
     return redirect(url_for('main.index'))
+#TODO Implement robust batch clean up for sessions.
