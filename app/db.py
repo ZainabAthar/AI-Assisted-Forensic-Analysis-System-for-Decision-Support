@@ -1,4 +1,4 @@
-from flask import g,current_app,flash
+from flask import g,current_app,flash#TODO stop using flash here.
 import sqlite3
 def get_db():
     db=getattr(g,'_database',None)
@@ -22,8 +22,8 @@ def query(query,params=None,one=False):
 def usr_id(usrname):
     ret=query('SELECT user_id FROM Users WHERE username=?;',(usrname,),one=True) 
     return ret[0]if ret else None
-def usr_name(usr_id):
-    ret=query('SELECT username FROM Users WHERE user_id=?;',(usr_id,),one=True)
+def usr_name(uid):
+    ret=query('SELECT username FROM Users WHERE user_id=?;',(uid,),one=True)
     return ret[0]if ret else None
 def usr_ssn_n(usrname):
     ret=query('SELECT COUNT(*) FROM Sessions WHERE user_id=?;',(usr_id(usrname),),one=True) 
@@ -51,11 +51,13 @@ def usr_reg(usrname,pwd):
         print(f'Database Error: \"{err}\"')#TODO maintain error codes and IDs.
         flash('Internal error. Try again later.','danger')
         return False
-def ssn_new():
+def ssn_new(addr):
+    if addr is None:
+        return None
     db=get_db()
     try:
         cur=db.cursor()
-        cur.execute('INSERT INTO Sessions(user_id) VALUES(NULL);')
+        cur.execute('INSERT INTO Sessions(user_id,client_addr) VALUES(NULL,?);',(addr,))
         ssn_id=cur.lastrowid
         cur.close()
         db.commit()
@@ -65,7 +67,7 @@ def ssn_new():
         print(f'Database Error: \"{err}\"')
         return None
 def ssn_usr_bind(sid,uid):
-    if uid is None or sid is None:
+    if sid is None:
         return False
     db=get_db()
     try:
@@ -77,13 +79,14 @@ def ssn_usr_bind(sid,uid):
     except sqlite3.Error as err:
         db.rollback()
         print(f'Database Error: \"{err}\"')
-        return None
-def ssn_rm(ssn_id):
-    if ssn_id is None:
+        return False
+def ssn_rm(sid):
+    if sid is None:
         return False
     db=get_db()
     try:
-        db.execute('DELETE FROM Sessions WHERE session_id=?',(ssn_id,))
+        db.execute('DELETE FROM Sessions WHERE session_id=?',(sid,))
+        db.execute('DELETE FROM Requests WHERE session_id=?',(sid,))
         db.commit()
         return True
     except sqlite3.Error as err:
@@ -94,3 +97,16 @@ def ssn_usr_id(ssn_id):
         return None
     ret=query('SELECT user_id FROM Sessions WHERE session_id=?;',(ssn_id,),one=True)
     return ret[0]if ret else None
+def req_log(sid,mthd):
+    if mthd is None:
+        return False
+    db=get_db()
+    try:
+        cur=db.cursor()
+        cur.execute('INSERT INTO Requests(session_id,method) VALUES(?,?);',(sid,mthd))
+        cur.close()
+        db.commit()
+        return True
+    except sqlite3.Error as err:
+        db.rollback()
+        print(f'Database Error: \"{err}\"')

@@ -1,6 +1,6 @@
 # CAT-Net-Webapp/app/__init__.py
 
-from flask import Flask
+from flask import Flask,request,session
 import os
 
 def create_app(config_object=None):
@@ -37,7 +37,11 @@ def create_app(config_object=None):
     # from app/catnet_core/analysis_service.py. This ensures the model 
     # loads before the first web request is processed.
 
-    from .db import close_db
+    from .db import close_db,req_log
     app.teardown_appcontext(close_db)
 
+    @app.before_request
+    def log_request():
+        ssn_id=session.get('session_id')
+        req_log(ssn_id,request.method)
     return app

@@ -9,37 +9,36 @@ from .catnet_core.analysis_service import analyze_image_with_catnet
 main = Blueprint('main', __name__)
 # --- Configuration ---
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-def allowed_file(filename):
+def allowed_file(filename):#TODO check extensions properly.
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 @main.route('/')
 def index():
     """Home page/Landing page."""
     ssn_id=session.get('session_id')
-    if not ssn_id:#Create session if none exists.
-        ssn_id=db.ssn_new()
+    if ssn_id is None:#Create session if none exists.
+        ssn_id=db.ssn_new(request.remote_addr)
         session['session_id']=ssn_id
     return render_template('index.html',is_logged_in=db.ssn_usr_id(ssn_id)is not None)
 @main.route('/dashboard')
 def dashboard():
     """Main page for uploading images."""
     ssn_id=session.get('session_id')
-    if not ssn_id:#Invalid session check.
+    if ssn_id is None:#Invalid session check.
         return 'Invalid session.',404#TODO improve error reporting.
-    return render_template('dashboard.html',is_logged_in=db.ssn_usr_id(ssn_id)is not None)
+    usr_id=db.ssn_usr_id(ssn_id)
+    usrname=db.usr_name(usr_id)
+    return render_template('dashboard.html',username=usrname,is_logged_in=usr_id is not None)
 @main.route('/download/<path:filename>', methods=['GET'])
 def download_file(filename):
     """Securely serves files from the predictions directory for download."""
-    
     predictions_folder = os.path.join(current_app.root_path, 'catnet_core', 'predictions')
-    
     return send_from_directory(
         directory=predictions_folder, 
         path=filename, 
         as_attachment=True
     )
-
-@main.route('/analyze', methods=['POST'])
+@main.route('/analyze',methods=['POST'])
 def analyze():
     """Handles image upload and runs the CAT-Net model."""
     # 1. Check if the POST request has the file part
