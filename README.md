@@ -98,4 +98,5 @@ http://127.0.0.1:5000
 
 * Ensure that model weights and folder structure are correctly placed before running.
 * If `jpegio` causes installation issues, verify that Conda is properly configured on your system.
+* Run tests using `pytest -v --ignore catnet_core/jpegio/tests/` from the `app/` directory.
 

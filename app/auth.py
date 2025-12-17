@@ -16,7 +16,7 @@ def login():
     if not usrname or not pwd:
         return'Missing username or password.'
     #Authenticate user. 
-    if not db.usr_auth(usrname,pwd):
+    if db.usr_auth(usrname,pwd)is False:
         flash('Invalid username or password.','danger')#TODO: more verbose errors. 
         return render_template('auth/login.html')
     #Update session.
@@ -38,8 +38,13 @@ def signup():
     if not usrname or not pwd:
         return'Missing username or password.'
     #Register new user.
-    if not db.usr_reg(usrname,pwd):
-        return redirect(url_for('auth.signup'))
+    match db.usr_reg(usrname,pwd):
+        case db.RET.ERR_USRNAME_TAKEN:
+            flash('Username taken.','danger')
+            return render_template('auth/signup')
+        case db.RET.ERR_INVALID_INPUT:
+            flash('Invalid username or password.','danger')
+            return render_template('auth/signup')
     #Create new session.
     usr_id=db.usr_id(usrname)
     ssn_id=db.ssn_new(request.remote_addr)

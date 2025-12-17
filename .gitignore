@@ -3,3 +3,5 @@
 *.pth.tar
 **/__pycache__/
 ./app/catnet_core/jpegio/*
+./app/catnet_core/predictions/*
+./app/catnet_core/uploads/*
