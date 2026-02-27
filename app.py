@@ -185,5 +185,36 @@ if uploaded_file:
                     except Exception as e:
                         st.error(f"Error generating report: {str(e)}")
                         # st.info("Make sure all dependencies are installed: `pip install -r 'Report generation/core/requirements_forensic.txt'`")
-                        
-                        
+#AUDIOS.                        
+audio_paths=[]#paths to files in input cache.
+audio_files=st.file_uploader('Upload Audio (max. 30s)',type=['wav','mp3'],accept_multiple_files=True)
+if audio_files:
+    #Require 2 input files.
+    if len(audio_files)!=2:
+        st.error('expect 2 audio valid clips as input.')
+    else:
+        #Save input audios.
+        for audio_file in audio_files:
+            audio_path=BASE_DIR/"temp_ui"/"input"/audio_file.name
+            audio_path.parent.mkdir(parents=True,exist_ok=True)
+            with open(audio_path,"wb")as f:
+                f.write(audio_file.getbuffer())
+            audio_paths.append(audio_path)
+    #Run analysis.
+    if st.button('Analyze Audio'):
+        with st.spinner('Processing...'):
+            st.text('none')
+            from audioproc import interface as audio_proc
+            audio_proc.IMG_DIR=BASE_DIR/'temp_ui'/'output'
+            model,feature_extractor,best_thresh=audio_proc.init_model(BASE_DIR/'audioproc'/'checkpoints_new'/'best_model.pth')
+            waveform_path=audio_proc.visualize_waveform_similarity(model,feature_extractor,audio_paths[0],audio_paths[1])
+            spectrogram_path=audio_proc.visualize_spectrogram_similarity(model,feature_extractor,audio_paths[0],audio_paths[1])
+            res=audio_proc.compute_similarity(model,feature_extractor,audio_paths[0],audio_paths[1],best_thresh)
+            if res['decision']:
+                decision='Same Speaker'
+            else:
+                decision='Different Speakers'
+            #Display results.
+            st.text(f"Similarity: {res['similarity']}\n\nDecision: {decision}.")
+            st.image(waveform_path)
+            st.image(spectrogram_path)
