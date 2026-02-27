@@ -14,7 +14,6 @@ AUDIO_SAMPLING_RATE=16000
 BATCH_SIZE=16
 EMBED_DIM=256
 DEVICE=torch.device("cuda"if torch.cuda.is_available() else"cpu")
-CHECKPOINT_DIR=os.path.abspath("./checkpoints_new")
 MODEL_SAVE_PATH="speaker_embedding_model_online_triplet_multiview.pth"
 # EXACT SAME MODEL ARCHITECTURE AS TRAINING
 class EmbeddingExtractor(nn.Module):
@@ -117,7 +116,7 @@ def calculate_metrics(model, dataloader):
 # Main evaluation
 def main():
     # Load best model
-    checkpoint_path=os.path.join(CHECKPOINT_DIR,"best_model.pth")
+    checkpoint_path=Path("best_model.pth")
     if not os.path.exists(checkpoint_path):
         checkpoint_path=MODEL_SAVE_PATH
         print(f"Best model not found, using final model: {checkpoint_path}.")

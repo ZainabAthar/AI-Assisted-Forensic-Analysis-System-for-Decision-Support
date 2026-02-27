@@ -8,7 +8,7 @@ from . import wsi
 import librosa
 import torch
 import os
-MODEL_PATH=os.path.join(wsi.CHECKPOINT_DIR,'best_model.pth')
+MODEL_PATH=Path('best_model.pth')
 IMG_DIR='./visualizations'
 def compute_similarity(model,feature_extractor,audio1_pth,audio2_pth,threshold):
     #Load audios.
