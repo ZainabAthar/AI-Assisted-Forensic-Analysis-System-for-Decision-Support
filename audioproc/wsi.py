@@ -37,7 +37,7 @@ class EmbeddingExtractor(nn.Module):
         return embeddings
 # Load model EXACTLY like training
 def load_trained_model(checkpoint_path,model_id=MODEL_ID,embed_dim=EMBED_DIM):
-    checkpoint=torch.load(checkpoint_path,map_location=DEVICE)
+    checkpoint=torch.load(checkpoint_path,map_location=DEVICE,weights_only=False)
     whisper_model=WhisperModel.from_pretrained(model_id).to(DEVICE)
     whisper_model.config.output_hidden_states=True
     for param in whisper_model.decoder.parameters():

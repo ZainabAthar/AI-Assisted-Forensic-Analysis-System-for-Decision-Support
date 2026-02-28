@@ -53,7 +53,7 @@ def _load_audio(pth,sample_rate=wsi.AUDIO_SAMPLING_RATE):
 def init_model(model_pth=MODEL_PATH):
     if not os.path.exists(model_pth):
         raise FileNotFoundError(f'Model checkpoint not found at {model_pth}.')
-    checkpoint=torch.load(model_pth,map_location='cpu')
+    checkpoint=torch.load(model_pth,map_location='cpu',weights_only=False)
     best_thresh=checkpoint.get('best_thresh',0.6)
     model,feature_extractor=wsi.load_trained_model(model_pth)
     return model,feature_extractor,best_thresh
@@ -71,9 +71,9 @@ def _compute_similarity_saliency(model,feature_extractor,audio,fixed_embed,sampl
     score=F.cosine_similarity(test_embed,fixed_embed.unsqueeze(0).to(wsi.DEVICE),dim=1)
     model.zero_grad()
     score.backward(retain_graph=True)
-    saliency=torch.abs(input_features.grad[0].mean(dim=0).cpu().detach())
+    saliency=torch.abs(input_features.grad[0]).sum(dim=0).cpu().detach().numpy()
     time_steps=np.linspace(0,min(len(audio)/sample_rate,30),len(saliency))
-    return saliency.numpy(),time_steps
+    return saliency,time_steps
 def visualize_waveform_similarity(model,feature_extractor,audio1_pth,audio2_pth,sample_rate=wsi.AUDIO_SAMPLING_RATE):
     os.makedirs(IMG_DIR,exist_ok=True)
     audio1=_load_audio(audio1_pth)

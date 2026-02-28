@@ -1,3 +1,5 @@
 temp_ui/*
 *.pth
 *cache*
+trained_models/*
+
