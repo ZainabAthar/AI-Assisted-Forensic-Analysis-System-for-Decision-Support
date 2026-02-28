@@ -28,6 +28,10 @@ if 'fig' not in st.session_state:
     st.session_state.fig = None
 if 'model_output' not in st.session_state:
     st.session_state.model_output = None
+if 'audio_analysis_complete' not in st.session_state:
+    st.session_state.audio_analysis_complete = False
+if 'audio_results' not in st.session_state:
+    st.session_state.audio_results = None
 
 BASE_DIR = Path(os.getcwd()).absolute()
 UI_OUTPUT = BASE_DIR / "temp_ui" / "output"
@@ -202,19 +206,70 @@ if audio_files:
             audio_paths.append(audio_path)
     #Run analysis.
     if st.button('Analyze Audio'):
-        with st.spinner('Processing...'):
-            st.text('none')
-            from audioproc import interface as audio_proc
-            audio_proc.IMG_DIR=BASE_DIR/'temp_ui'/'output'
-            model,feature_extractor,best_thresh=audio_proc.init_model(BASE_DIR/'audioproc'/'checkpoints_new'/'best_model.pth')
-            waveform_path=audio_proc.visualize_waveform_similarity(model,feature_extractor,audio_paths[0],audio_paths[1])
-            spectrogram_path=audio_proc.visualize_spectrogram_similarity(model,feature_extractor,audio_paths[0],audio_paths[1])
-            res=audio_proc.compute_similarity(model,feature_extractor,audio_paths[0],audio_paths[1],best_thresh)
-            if res['decision']:
-                decision='Same Speaker'
-            else:
-                decision='Different Speakers'
-            #Display results.
-            st.text(f"Similarity: {res['similarity']}\n\nDecision: {decision}.")
-            st.image(waveform_path)
-            st.image(spectrogram_path)
+        if len(audio_paths) < 2:
+            st.error("Please upload 2 audio files before analyzing.")
+        else:
+            with st.spinner('Processing...'):
+                from audioproc import interface as audio_proc
+                audio_proc.IMG_DIR=BASE_DIR/'temp_ui'/'output'
+                model,feature_extractor,best_thresh=audio_proc.init_model(BASE_DIR/'audioproc'/'checkpoints_new'/'best_model.pth')
+                waveform_path=audio_proc.visualize_waveform_similarity(model,feature_extractor,audio_paths[0],audio_paths[1])
+                spectrogram_path=audio_proc.visualize_spectrogram_similarity(model,feature_extractor,audio_paths[0],audio_paths[1])
+                res=audio_proc.compute_similarity(model,feature_extractor,audio_paths[0],audio_paths[1],best_thresh)
+                
+                # Store in session state
+                st.session_state.audio_analysis_complete = True
+                st.session_state.audio_results = {
+                    'res': res,
+                    'waveform_path': waveform_path,
+                    'spectrogram_path': spectrogram_path,
+                    'audio_paths': [str(p) for p in audio_paths]
+                }
+
+    # Display results if complete
+    if st.session_state.audio_analysis_complete and st.session_state.audio_results:
+        results = st.session_state.audio_results
+        res = results['res']
+        decision = 'Same Speaker' if res['decision'] else 'Different Speakers'
+        
+        st.markdown("---")
+        st.subheader("Audio Analysis Results")
+        st.text(f"Similarity Score: {res['similarity']:.4f}\nDecision: {decision}")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.image(results['waveform_path'], caption="Waveform Similarity Saliency")
+        with col2:
+            st.image(results['spectrogram_path'], caption="Spectrogram Similarity Saliency")
+        
+        # PDF Report Generation
+        st.markdown("---")
+        if st.button("Generate Audio Forensic Report", key="gen_audio_report"):
+            with st.spinner("Generating PDF report..."):
+                from audio_report_generator import AudioForensicReportGenerator
+                report_gen = AudioForensicReportGenerator()
+                report_output = BASE_DIR / "temp_ui" / "output" / f"audio_forensic_report_{int(time.time())}.pdf"
+                
+                audio_filenames = [os.path.basename(p) for p in results['audio_paths']]
+                success, msg = report_gen.create_pdf_report(
+                    report_output,
+                    res['similarity'],
+                    decision,
+                    results['waveform_path'],
+                    results['spectrogram_path'],
+                    audio_names=audio_filenames
+                )
+                
+                if success:
+                    st.success("Report generated!")
+                    with open(report_output, "rb") as f:
+                        st.download_button(
+                            label="Download Audio Forensic Report (PDF)",
+                            data=f.read(),
+                            file_name=report_output.name,
+                            mime="application/pdf",
+                            use_container_width=True,
+                            type="primary"
+                        )
+                else:
+                    st.error(f"Failed to generate report: {msg}")

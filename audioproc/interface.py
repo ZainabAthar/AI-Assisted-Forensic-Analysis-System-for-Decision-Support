@@ -53,7 +53,7 @@ def _load_audio(pth,sample_rate=wsi.AUDIO_SAMPLING_RATE):
 def init_model(model_pth=MODEL_PATH):
     if not os.path.exists(model_pth):
         raise FileNotFoundError(f'Model checkpoint not found at {model_pth}.')
-    checkpoint=torch.load(model_pth,map_location='cpu',weights_only=False)
+    checkpoint=torch.load(model_pth,map_location='cpu')
     best_thresh=checkpoint.get('best_thresh',0.6)
     model,feature_extractor=wsi.load_trained_model(model_pth)
     return model,feature_extractor,best_thresh
@@ -95,7 +95,7 @@ def _plot_saliency_waveform(audio,saliency,time_steps,ax,title,sample_rate=wsi.A
     time_audio=np.linspace(0,len(audio)/sample_rate,len(audio))
     sal_resampled=np.interp(time_audio,time_steps,saliency)
     sal_max=np.max(sal_resampled)
-    sal_norm=sal_resampled/sal_max if sal_max>0 else np.zeroes_like(sal_resampled)
+    sal_norm=sal_resampled/sal_max if sal_max>0 else np.zeros_like(sal_resampled)
     points=np.array([time_audio,audio]).T.reshape(-1,1,2)
     segments=np.concatenate([points[:-1],points[1:]],axis=1)
     colors=plt.cm.plasma(sal_norm)
@@ -131,7 +131,7 @@ def _plot_saliency_spectrogram(audio,saliency,time_steps,ax,title,sample_rate=ws
     time_audio=np.linspace(0,duration,len(audio))
     sal_resampled=np.interp(time_audio,time_steps,saliency)
     sal_max=np.max(sal_resampled)
-    sal_norm=sal_resampled/sal_max if sal_max>0 else np.zeroes_like(sal_resampled)
+    sal_norm=sal_resampled/sal_max if sal_max>0 else np.zeros_like(sal_resampled)
     ax_sal=ax.twinx()
     n_frames=S_db.shape[1]
     sal_spec=np.interp(np.linspace(0,1,n_frames),np.linspace(0,1,len(sal_norm)),sal_norm)
